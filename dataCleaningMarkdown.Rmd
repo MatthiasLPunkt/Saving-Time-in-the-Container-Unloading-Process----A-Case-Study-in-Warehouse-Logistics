@@ -17,12 +17,12 @@ library(tidyverse)
 ```
 ## Check and set current working directory
 If you want run this markdown file, it is important that you change the absolute file path to wherever you saved the data files!
-```{r}
+```{r include=FALSE}
 setwd("C:/Users/Matthias/Desktop/Google_Data_Analytics_Capstone_Project_Container")
 getwd()
 ```
 ## Importing, inspection and transformation of the data
-```{r}
+```{r message=FALSE, warning=FALSE}
 ContainerData <- read_csv2("rawDataContainerUnloading2019v2.csv")
 glimpse(ContainerData)
 ```
