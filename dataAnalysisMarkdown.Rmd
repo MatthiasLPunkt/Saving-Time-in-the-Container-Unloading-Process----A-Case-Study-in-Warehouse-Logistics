@@ -1,0 +1,279 @@
+---
+title: "Data Analysis"
+author: "by Matthias Langenhan"
+date: "03.10.2021"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+# This R-markdown-file documents all data analysis done in R for the case study
+## Load packages
+For basic data wrangling, manipulation and plotting (via ggplot2) we install the tidyverse package that itself contains a lot of useful packages.The stargazer package enables us to give neat tables as output for functions on our data frames. It is especially useful for regression analysis output tables.
+You will need to install the tidyverse and stargazer packages manually via install.packages("tidyverse") and install.packages("stargazer"), since doing so through a knitr document causes issues.
+
+```{r}
+library(tidyverse)
+library(stargazer)
+```
+
+## Check and set current working directory
+If you want run this markdown file, it is important that you change the absolute file path to wherever you saved the data files!
+
+```{r include=FALSE}
+setwd("C:/Users/Matthias/Desktop/Google_Data_Analytics_Capstone_Project_Container")
+getwd()
+```
+
+## Importing and first look at data
+
+```{r}
+df <- read.csv2("core_data_v3.csv")
+```
+
+Stargazer gives us nice output:
+
+```{r}
+stargazer(df[c("time_sec",
+                 "team_size",
+                 "item_weight_kg",
+                 "item_volume_cc",
+                 "palette_quantity",
+                 "palette_number",
+                 "item_time_sec")],
+          type = "text",
+          title = "Descriptive Statistics",
+          out = "table1.txt",
+          covariate.labels = c("Time per Palette (seconds)",
+                               "Team Size",
+                               "Item Weight (kilograms)",
+                               "Item Volume (cubic centimeters)",
+                               "Item Quantity per Palette",
+                               "Number of Palettes",
+                               "Time per Item (seconds)"))
+```
+
+Here is a first visualization for the variable of interest "time_sec" as a histogram:
+
+```{r message=FALSE, warning=FALSE}
+histo_df1 <- df %>% 
+  ggplot() +
+  geom_histogram(mapping = aes(x = time_sec, fill = "red")) +
+  guides(fill="none") +
+  labs(x = "Time per Palette \n(seconds)",
+       title = "How long does it take to fully stack a palette?",
+       subtitle = "distribution of palette completion times via histogramm",
+       caption = "source: own data")
+        
+histo_df1
+```
+
+# Variables "Timer per Palette (seconds)" and "Team Size" in relation as box plot, sample sizes annotated
+We define a function that returns sample sizes which will be annotated to the visualizations:
+
+```{r}
+sample_size_finder <-  function(variable, value){ 
+  df %>% 
+    filter(.data[[variable]] == value) %>%
+    count()
+}
+```
+
+We build some string variables that will help us with the annotations to the plot:
+
+```{r}
+str_0<- "n ="
+ss_team_a = sample_size_finder("team_size", 3)
+ss_team_b = sample_size_finder("team_size", 4)
+ss_team_c = sample_size_finder("team_size", 5)
+ss_team_d = sample_size_finder("team_size", 6)
+```
+
+Now we can construct the box plot:
+
+```{r warning=FALSE}
+box_df1 <- df %>% 
+  ggplot() +
+  geom_boxplot(mapping = aes(group = team_size, x = team_size, y = time_sec)) +
+  scale_x_discrete(limits = c(3, 4, 5, 6)) +
+  labs(x = "Team Size",
+       y = "Time per Palette \n(seconds)",
+       title = "How does the team size impact palette completion time?",
+       subtitle = "comparison via box plot \nn = sample size",
+       caption = "source: own data") +
+  annotate("text", x = 3, y = 75, label = paste(str_0, ss_team_a)) +
+  annotate("text", x = 4, y = 50, label = paste(str_0, ss_team_b)) +
+  annotate("text", x = 5, y = 25, label = paste(str_0, ss_team_c)) +
+  annotate("text", x = 6, y = 1, label = paste(str_0, ss_team_d))
+
+box_df1
+```
+
+## Show means of "Time per Palette (seconds)" for different values of "Team Sizes"
+We define a function that returns number of observations for a variable's given value:
+
+```{r}
+add_observations_time_sec <- function(variable, value){
+df %>% 
+  filter(.data[[variable]] == value) %>% 
+  select(time_sec) %>%
+  sum()
+}
+```
+
+Let's gather the number of observations for given values for team sizes:
+
+```{r}
+time_sec_team_size_3 = add_observations_time_sec("team_size", 3)
+time_sec_team_size_4 = add_observations_time_sec("team_size", 4)
+time_sec_team_size_5 = add_observations_time_sec("team_size", 5)
+time_sec_team_size_6 = add_observations_time_sec("team_size", 6)
+```
+
+Finally, we calculate the mean of "Time per Palette (seconds)" for the individual team sizes:
+
+```{r}
+mean_team_3 = time_sec_team_size_3/ss_team_a
+mean_team_4 = time_sec_team_size_4/ss_team_b
+mean_team_5 = time_sec_team_size_5/ss_team_c
+mean_team_6 = time_sec_team_size_6/ss_team_d
+
+mean_team <- c(mean_team_3, mean_team_4, mean_team_5, mean_team_6)
+```
+Create a data frame consisting of the calculated means:
+
+```{r}
+help_df <- data.frame(team_size = c(3:6),
+                      mean_time_sec = as.double(mean_team))
+
+help_df
+```
+
+## Transform "Team Size" data and export into csv file for further visualization
+Define a function that returns number of observations for all observations of a variable:
+
+```{r}
+sample_size_finder_2 <-  function(variable){
+  df %>% 
+    select(.data[[variable]]) %>%
+    count()
+}
+```
+
+Gather the number of observations for the different team sizes:
+
+```{r}
+ss_team_size <- sample_size_finder_2("team_size")
+```
+Build a vector of sample sizes per team size:
+
+```{r}
+team_size_stats <- c(ss_team_size, ss_team_a, ss_team_b, ss_team_c, ss_team_d)
+team_size_stats
+```
+
+Finally, we export team_size_stats as csv file for visualization in MS-Excel (You probably won't need to do this step):
+
+```{r}
+write.csv2(team_size_stats, "pie_chart_team_size.csv")
+```
+
+## Variables "Time per Palette (seconds)" and "Item Volume (cubic centimeter)" in relation as box plot, sample sizes annotated
+Gather the number of observations for given values of "Item Volume (cubic centimeter)", which we will anotate to the box plot:
+
+```{r}
+ss_volume_a <- sample_size_finder("item_volume_cc", 30723.00)
+ss_volume_b <- sample_size_finder("item_volume_cc", 41538.00)
+ss_volume_c <- sample_size_finder("item_volume_cc", 43987.50)
+ss_volume_d <- sample_size_finder("item_volume_cc", 64275.75)
+ss_volume_e <- sample_size_finder("item_volume_cc", 85800.00)
+```
+
+Create the box plot and show it:
+
+```{r}
+box_df2 <- df %>% 
+  ggplot() +
+  geom_boxplot(mapping = aes(group = item_volume_cc, x = item_volume_cc, y = time_sec)) +
+  labs(title = "How does the volume of an item impact palette completion time?",
+       subtitle = "comparison via box plot \nn = sample size",
+       caption = "source: own data",
+       x = "Item Volume \n(cubic centimeter)", 
+       y = "Time per Palette \n(seconds)") +
+  annotate("text", x = 30723.00, y = 150, label = paste(str_0, ss_volume_a)) +
+  annotate("text", x = 37500.00, y = 120, label = paste(str_0, ss_volume_b)) +
+  annotate("text", x = 47500.00, y = 75, label = paste(str_0, ss_volume_c)) +
+  annotate("text", x = 64275.75, y = 50, label = paste(str_0, ss_volume_d)) +
+  annotate("text", x = 85800.00, y = 20, label = paste(str_0, ss_volume_e))
+
+box_df2
+```
+Save the plot, if you want to:
+
+```{r include=FALSE}
+ggsave("boxplot_palette_time_item_volume_cc.png", plot = box_df2)
+```
+
+## Multiple linear regression, regular and Z-standardized 
+Doing the regular multiple linear regression. Let's define the model with our controls and execute it:
+
+```{r}
+mlr_df <- lm(time_sec ~team_size + item_weight_kg + item_volume_cc + palette_quantity + 
+             palette_number,
+             data = df)
+
+```
+
+Get results from the regular regression as a nicely formatted table via stargazer library:
+
+```{r}
+stargazer(mlr_df,
+          type = "text",
+          title = "Multiple Linear Regression",
+          out = "tablex.txt",
+          covariate.labels = c("Team Size",
+                               "Item Weight (kilograms)",
+                               "Item Volume (cubic centimeters)",
+                               "Item Quantity per Palette",
+                               "Number of Palette"))
+```
+
+Data transformation for z-standardized multiple linear regression via the scale() function:
+
+```{r}
+z_time_sec <- scale(df$time_sec)
+z_team_size <- scale(df$team_size)
+z_item_weight_kg <- scale(df$item_weight_kg)
+z_item_volume_cc <- scale(df$item_volume_cc)
+z_palette_quantity <- scale(df$palette_quantity)
+z_palette_number <- scale(df$palette_number)
+```
+
+Build a new data frame from the z-standardized data:
+
+```{r}
+dfz <- data.frame(z_time_sec,
+                  z_team_size,
+                  z_item_weight_kg,
+                  z_item_volume_cc,
+                  z_palette_quantity,
+                  z_palette_number)
+```
+
+Run the model and show results:
+
+```{r}
+Z_mlr_df <- lm(z_time_sec ~ z_team_size + z_item_weight_kg + z_item_volume_cc + z_palette_quantity + z_palette_number, data = dfz)
+```
+Run this, if you want neater output for the z-regression:
+
+```{r}
+stargazer(Z_mlr_df, type = "text",
+          title = "Z-Standardized Multiple Linear Regression",
+          out = "tablez.txt",
+          covariate.labels = c("Team Size",
+                               "Item Weight (kilograms)",
+                               "Item Volume (cubic centimeters)",
+                               "Item Quantity per Palette",
+                               "Number of Palette"))
+```
