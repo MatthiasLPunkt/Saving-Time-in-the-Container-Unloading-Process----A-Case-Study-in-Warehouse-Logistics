@@ -68,7 +68,7 @@ histo_df1 <- df %>%
 histo_df1
 ```
 
-# Variables "Timer per Palette (seconds)" and "Team Size" in relation as box plot, sample sizes annotated
+## Variables "Timer per Palette (seconds)" and "Team Size" in relation as box plot, sample sizes annotated
 We define a function that returns sample sizes which will be annotated to the visualizations:
 
 ```{r}
@@ -110,7 +110,7 @@ box_df1
 ```
 
 ## Show means of "Time per Palette (seconds)" for different values of "Team Sizes"
-We define a function that returns number of observations for a variable's given value:
+We define a function that returns number of observations for any variable at any value:
 
 ```{r}
 add_observations_time_sec <- function(variable, value){
@@ -208,14 +208,9 @@ box_df2 <- df %>%
 
 box_df2
 ```
-Save the plot, if you want to:
-
-```{r include=FALSE}
-ggsave("boxplot_palette_time_item_volume_cc.png", plot = box_df2)
-```
 
 ## Multiple linear regression, regular and Z-standardized 
-Doing the regular multiple linear regression. Let's define the model with our controls and execute it:
+We do a regular multiple linear regression. Let's define the model with our controls and execute it:
 
 ```{r}
 mlr_df <- lm(time_sec ~team_size + item_weight_kg + item_volume_cc + palette_quantity + 
@@ -263,7 +258,11 @@ dfz <- data.frame(z_time_sec,
 Run the model and show results:
 
 ```{r}
-Z_mlr_df <- lm(z_time_sec ~ z_team_size + z_item_weight_kg + z_item_volume_cc + z_palette_quantity + z_palette_number, data = dfz)
+Z_mlr_df <- lm(z_time_sec ~ z_team_size +
+                 z_item_weight_kg +
+                 z_item_volume_cc +
+                 z_palette_quantity +
+                 z_palette_number, data = dfz)
 ```
 Run this, if you want neater output for the z-regression:
 
