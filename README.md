@@ -3,6 +3,9 @@
 
 Thanks for dropping by! This repository hosts the files for my case study.
 You'll find the condensed findings as a report in the file **Full Report.pdf**. It contains hyperlinks to all data and code files used in the report.
+
+[This video gives a high level descripton of the Full report](https://www.youtube.com/watch?v=y86REooEVcI&t=2s).
+
 In case you are interested in the individual files, the data sources are:
 
 - rawDataContainerUnloading2019v1.xlsx (data containing the unaltered data just after I manually entered it into Excel)
